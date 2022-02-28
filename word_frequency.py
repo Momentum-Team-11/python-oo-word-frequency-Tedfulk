@@ -1,3 +1,6 @@
+from audioop import reverse
+import string
+
 STOP_WORDS = [
     'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has',
     'he', 'i', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to',
@@ -7,19 +10,22 @@ STOP_WORDS = [
 
 class FileReader:
     def __init__(self, filename):
-        pass
+        self.filename = filename
 
     def read_contents(self):
         """
         This should read all the contents of the file
         and return them as one string.
         """
-        raise NotImplementedError("FileReader.read_contents")
+        with open(self.filename) as file:
+            text_string = file.read()
+        return text_string
 
 
 class WordList:
-    def __init__(self, text):
-        pass
+    def __init__(self, text_string):
+        self.list = []
+        self.text = text_string
 
     def extract_words(self):
         """
@@ -27,14 +33,12 @@ class WordList:
         is responsible for lowercasing all words and stripping
         them of punctuation.
         """
-        raise NotImplementedError("WordList.extract_words")
-
-    def remove_stop_words(self):
-        """
-        Removes all stop words from our word list. Expected to
-        be run after extract_words.
-        """
-        raise NotImplementedError("WordList.remove_stop_words")
+        self.list = self.text.lower().strip().split()
+        transformed_words = []
+        for word in self.list:
+            if word not in STOP_WORDS:
+                transformed_words.append(word.strip(string.punctuation))
+        self.list = transformed_words
 
     def get_freqs(self):
         """
@@ -43,11 +47,20 @@ class WordList:
         extract_words and remove_stop_words. The data structure
         could be a dictionary or another type of object.
         """
-        raise NotImplementedError("WordList.get_freqs")
+        word_count = {}
+        for word in self.list:
+            if word not in word_count:
+                word_count[word] = 1
+            else:
+                word_count[word] += 1
+        return word_count
 
 
 class FreqPrinter:
     def __init__(self, freqs):
+        self.freqs = freqs
+
+    def use_count_as_key(self):
         pass
 
     def print_freqs(self):
@@ -67,7 +80,12 @@ class FreqPrinter:
        rights | 6    ******
         right | 6    ******
         """
-        raise NotImplementedError("FreqPrinter.print_freqs")
+        sorted_values = dict(sorted(self.freqs.items(),
+                                    key=lambda seq: seq[1], reverse=True))
+        for word in sorted_values:
+            print(
+                f"{word:>20}|{sorted_values[word]:2}{'*' * sorted_values[word]}"
+            )
 
 
 if __name__ == "__main__":
@@ -85,8 +103,8 @@ if __name__ == "__main__":
         reader = FileReader(file)
         word_list = WordList(reader.read_contents())
         word_list.extract_words()
-        word_list.remove_stop_words()
         printer = FreqPrinter(word_list.get_freqs())
+        word_list.get_freqs()
         printer.print_freqs()
     else:
         print(f"{file} does not exist!")
